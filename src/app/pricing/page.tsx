@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, Star, ChevronRight } from "lucide-react";
+import { PricingCheckoutButton } from "@/components/PricingCheckoutButton";
 
 export const metadata: Metadata = {
   title: "Pricing — Lumi AI Learning Companion",
@@ -87,10 +88,8 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <Link href="/app" className="block text-center bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl transition-colors text-lg shadow-lg shadow-indigo-600/30">
-              Start 30-Day Free Trial
-            </Link>
-            <p className="text-center text-indigo-400 text-xs mt-3">No credit card required for trial</p>
+            <PricingCheckoutButton />
+            <p className="text-center text-indigo-400 text-xs mt-3">Sign in or create account to get started</p>
           </div>
         </div>
 

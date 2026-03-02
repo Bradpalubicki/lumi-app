@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, Star } from "lucide-react";
+import { Menu, X, Star, LayoutDashboard } from "lucide-react";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 const nav = [
   { href: "/how-it-works", label: "How It Works" },
@@ -40,14 +41,40 @@ export function Header() {
             ))}
           </nav>
 
-          {/* CTA */}
+          {/* CTA / Auth */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/app"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors"
-            >
-              Try Lumi Free
-            </Link>
+            <SignedOut>
+              <Link
+                href="/sign-in"
+                className="text-sm font-semibold text-indigo-200 hover:text-white transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/app"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                Try Lumi Free
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-1.5 text-sm font-semibold text-indigo-200 hover:text-white transition-colors"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
+              </Link>
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "w-8 h-8",
+                    userButtonPopoverCard: "bg-[#1a1030] border border-indigo-800/40",
+                    userButtonPopoverActionButton: "text-indigo-200 hover:text-white",
+                  },
+                }}
+              />
+            </SignedIn>
           </div>
 
           {/* Mobile toggle */}
@@ -74,13 +101,32 @@ export function Header() {
               {n.label}
             </Link>
           ))}
-          <Link
-            href="/app"
-            onClick={() => setOpen(false)}
-            className="mt-2 bg-indigo-600 text-white font-bold px-4 py-3 rounded-lg text-center"
-          >
-            Try Lumi Free
-          </Link>
+          <SignedOut>
+            <Link
+              href="/sign-in"
+              onClick={() => setOpen(false)}
+              className="mt-2 border border-indigo-700 text-indigo-300 font-bold px-4 py-3 rounded-lg text-center"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/app"
+              onClick={() => setOpen(false)}
+              className="bg-indigo-600 text-white font-bold px-4 py-3 rounded-lg text-center"
+            >
+              Try Lumi Free
+            </Link>
+          </SignedOut>
+          <SignedIn>
+            <Link
+              href="/dashboard"
+              onClick={() => setOpen(false)}
+              className="mt-2 border border-indigo-700 text-indigo-300 font-bold px-4 py-3 rounded-lg text-center flex items-center justify-center gap-2"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Dashboard
+            </Link>
+          </SignedIn>
         </div>
       )}
     </header>

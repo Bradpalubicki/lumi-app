@@ -1,9 +1,33 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Mic, Square, Volume2, Star, Shield } from "lucide-react";
+import { Send, Mic, Square, Volume2, Star, Shield, Crown } from "lucide-react";
+import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import { converse, checkSafetyInput, synthesize, sendVoice } from "@/lib/api";
 import { getOrCreateSession, getAgeBand, setAgeBand } from "@/lib/session";
+
+const FREE_DAILY_LIMIT = 15;
+const CONVO_COUNT_KEY = "lumi_convo_count";
+const CONVO_DATE_KEY = "lumi_convo_date";
+
+function getConvoCount(): number {
+  if (typeof window === "undefined") return 0;
+  const date = localStorage.getItem(CONVO_DATE_KEY);
+  const today = new Date().toDateString();
+  if (date !== today) {
+    localStorage.setItem(CONVO_DATE_KEY, today);
+    localStorage.setItem(CONVO_COUNT_KEY, "0");
+    return 0;
+  }
+  return parseInt(localStorage.getItem(CONVO_COUNT_KEY) || "0", 10);
+}
+
+function incrementConvoCount() {
+  if (typeof window === "undefined") return;
+  const count = getConvoCount();
+  localStorage.setItem(CONVO_COUNT_KEY, String(count + 1));
+}
 
 type Message = {
   id: string;
@@ -44,6 +68,9 @@ function playBase64Audio(b64: string) {
 }
 
 export function ChatInterface() {
+  const { user } = useUser();
+  const isFamilyPlan = user?.publicMetadata?.plan === "family";
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [ageBand, setAgeBandState] = useState<AgeBand>("6-8");
@@ -52,6 +79,8 @@ export function ChatInterface() {
   const [isRecording, setIsRecording] = useState(false);
   const [lastReply, setLastReply] = useState("");
   const [speakingTts, setSpeakingTts] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [convoCount, setConvoCount] = useState(0);
 
   const sessionId = useRef<string>("");
   const chatRef = useRef<HTMLDivElement>(null);
@@ -62,6 +91,7 @@ export function ChatInterface() {
     sessionId.current = getOrCreateSession();
     const saved = getAgeBand() as AgeBand;
     setAgeBandState(saved);
+    setConvoCount(getConvoCount());
     addMsg("system", `Welcome to Lumi! Session ready for ${saved === "4-5" ? "Tiny Talker 🌟" : saved === "6-8" ? "Explorer 🚀" : "Discoverer 🔬"} mode.`);
   }, []);
 
@@ -80,6 +110,13 @@ export function ChatInterface() {
   const handleSend = async () => {
     const text = input.trim();
     if (!text || busy) return;
+
+    // Free tier limit check
+    if (!isFamilyPlan && convoCount >= FREE_DAILY_LIMIT) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     setBusy(true);
     setInput("");
     addMsg("user", text);
@@ -104,6 +141,11 @@ export function ChatInterface() {
         return msgs;
       });
       setLastReply(data.reply);
+      // Track conversation count for free tier
+      if (!isFamilyPlan) {
+        incrementConvoCount();
+        setConvoCount(getConvoCount());
+      }
     } catch (e) {
       addMsg("system", `Error: ${e instanceof Error ? e.message : "Something went wrong"}`);
     } finally {
@@ -202,7 +244,7 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-[85vh] max-h-[700px] bg-[#0f0a1e] rounded-2xl border border-indigo-800/40 overflow-hidden shadow-2xl">
+    <div className="relative flex flex-col h-[85vh] max-h-[700px] bg-[#0f0a1e] rounded-2xl border border-indigo-800/40 overflow-hidden shadow-2xl">
       {/* Header */}
       <div className="bg-[#1a1030] border-b border-indigo-800/30 px-4 py-3 flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2">
@@ -280,8 +322,43 @@ export function ChatInterface() {
         ))}
       </div>
 
+      {/* Upgrade modal */}
+      {showUpgradeModal && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-2xl">
+          <div className="bg-[#1a1030] border border-indigo-500/40 rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
+            <div className="w-14 h-14 rounded-full bg-yellow-400/10 border border-yellow-400/30 flex items-center justify-center mx-auto mb-4">
+              <Crown className="w-7 h-7 text-yellow-400" />
+            </div>
+            <h3 className="text-xl font-black text-white mb-2">Daily limit reached</h3>
+            <p className="text-indigo-300 text-sm mb-6 leading-relaxed">
+              You&apos;ve used your {FREE_DAILY_LIMIT} free conversations today. Upgrade to the Family Plan for unlimited access — plus voice, parent controls, and history.
+            </p>
+            <Link
+              href="/pricing"
+              className="block w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-xl text-sm transition-colors mb-3"
+            >
+              Upgrade to Family Plan
+            </Link>
+            <button
+              onClick={() => setShowUpgradeModal(false)}
+              className="text-indigo-400 hover:text-indigo-300 text-sm transition-colors"
+            >
+              Maybe tomorrow
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Input area */}
       <div className="bg-[#1a1030] border-t border-indigo-800/30 px-4 py-3">
+        {!isFamilyPlan && (
+          <div className="flex items-center justify-between text-xs text-indigo-400 mb-2">
+            <span>{convoCount}/{FREE_DAILY_LIMIT} free conversations today</span>
+            <Link href="/pricing" className="text-indigo-300 hover:text-white font-semibold transition-colors flex items-center gap-1">
+              <Crown className="w-3 h-3" />Upgrade
+            </Link>
+          </div>
+        )}
         {mode === "text" ? (
           <div className="flex gap-2 items-center">
             <input
