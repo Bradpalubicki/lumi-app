@@ -108,6 +108,7 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {[
+                  ["Games, songs & activities", "✅", "❌", "❌"],
                   ["Designed for children", "✅", "Partial", "❌"],
                   ["Real voice conversations", "✅", "❌", "Premium only"],
                   ["3 true age modes", "✅", "❌", "❌"],

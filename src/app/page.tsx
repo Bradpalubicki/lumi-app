@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Star, Shield, Mic, Brain, Heart, ChevronRight, Check, Sparkles, Volume2, Users } from "lucide-react";
+import { MiniLumiDemo } from "@/components/MiniLumiDemo";
 
 export const metadata: Metadata = {
   title: "Lumi — Safe AI Learning Companion for Kids Ages 4–12",
@@ -73,6 +74,17 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Live demo widget */}
+      <section className="py-12 px-4 bg-indigo-950/40">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-6">
+            <p className="text-indigo-300 text-sm font-semibold uppercase tracking-wider mb-2">Try it now — free, no signup</p>
+            <h2 className="text-3xl font-black text-white">Say hello to Lumi</h2>
+          </div>
+          <MiniLumiDemo />
         </div>
       </section>
 
