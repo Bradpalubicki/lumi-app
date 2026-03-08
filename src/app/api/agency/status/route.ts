@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 // Lumi App — kid assistant PWA. No server-side DB — backend is kid-assistant-api on Railway.
 // Returns static health status so agency engine can confirm site is up.
 export async function GET(req: NextRequest) {
-  const secret = process.env.AGENCY_SECRET;
+  const secret = process.env.AGENCY_SNAPSHOT_SECRET;
   const auth = req.headers.get('authorization');
   if (!secret || auth !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
